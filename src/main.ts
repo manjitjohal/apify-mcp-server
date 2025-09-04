@@ -66,7 +66,7 @@ if (STANDBY_MODE) {
         const app = createExpressApp(HOST, {
             enableAddingActors: Boolean(input.enableAddingActors),
             enableDefaultActors: true,
-            actors: input.actors || [],
+            actors: Array.isArray(input.actors) ? input.actors : (input.actors ? [input.actors] : []),
         });
         
         app.listen(PORT, () => {
