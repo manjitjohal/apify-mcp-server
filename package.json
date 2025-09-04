@@ -68,7 +68,7 @@
     "vitest": "^3.0.8"
   },
   "scripts": {
-    "start": "npm run start:dev",
+    "start": "node dist/main.js",
     "start:prod": "node dist/main.js",
     "start:dev": "tsx src/main.ts",
     "lint": "eslint .",
