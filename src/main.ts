@@ -50,17 +50,29 @@ if (STANDBY_MODE) {
         log.info('Actor web server listening', { host: HOST, port: PORT });
     });
 } else {
-    log.info('Actor is not designed to run in the NORMAL model (use this mode only for debugging purposes)');
+    // Check if we have debugActor - if so, run in debug mode
+    if (input.debugActor && input.debugActorInput) {
+        log.info('Running in debug mode with specific actor');
+        const options = { memory: input.maxActorMemoryBytes } as ActorCallOptions;
+        const { items } = await callActorGetDataset(input.debugActor!, input.debugActorInput!, process.env.APIFY_TOKEN, options);
 
-    if (input && !input.debugActor && !input.debugActorInput) {
-        await Actor.fail('If you need to debug a specific Actor, please provide the debugActor and debugActorInput fields in the input');
+        await Actor.pushData(items);
+        log.info('Pushed items to dataset', { itemCount: items.count });
+        await Actor.exit();
+    } else {
+        // Force STANDBY mode for MCP server functionality
+        log.info('No debug actor specified, starting in MCP server mode');
+        
+        const app = createExpressApp(HOST, {
+            enableAddingActors: Boolean(input.enableAddingActors),
+            enableDefaultActors: true,
+            actors: input.actors || [],
+        });
+        
+        app.listen(PORT, () => {
+            log.info('MCP server listening', { host: HOST, port: PORT });
+        });
     }
-    const options = { memory: input.maxActorMemoryBytes } as ActorCallOptions;
-    const { items } = await callActorGetDataset(input.debugActor!, input.debugActorInput!, process.env.APIFY_TOKEN, options);
-
-    await Actor.pushData(items);
-    log.info('Pushed items to dataset', { itemCount: items.count });
-    await Actor.exit();
 }
 
 // So Ctrl+C works locally
